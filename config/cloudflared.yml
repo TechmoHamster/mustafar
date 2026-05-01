@@ -1,0 +1,38 @@
+# Cloudflare Tunnel Configuration — Mustafar
+# File: ~/.cloudflared/config.yml  (or reference with --config flag)
+#
+# Setup steps:
+#   1. cloudflared tunnel login
+#   2. cloudflared tunnel create mustafar
+#   3. Copy tunnel ID below
+#   4. cloudflared tunnel route dns mustafar mustafar.yourdomain.com
+#   5. sudo cloudflared service install
+
+tunnel: YOUR_TUNNEL_ID_HERE         # ← replace after: cloudflared tunnel create mustafar
+credentials-file: /Users/admin/.cloudflared/YOUR_TUNNEL_ID_HERE.json
+
+ingress:
+  # ── Portainer ──────────────────────────────────
+  - hostname: portainer.yourdomain.com
+    service: https://localhost:9443
+    originRequest:
+      noTLSVerify: true
+
+  # ── Netdata ───────────────────────────────────
+  - hostname: netdata.yourdomain.com
+    service: http://localhost:19999
+
+  # ── Uptime Kuma ───────────────────────────────
+  - hostname: status.yourdomain.com
+    service: http://localhost:3001
+
+  # ── Dozzle ────────────────────────────────────
+  - hostname: logs.yourdomain.com
+    service: http://localhost:8888
+
+  # ── Next.js Dashboard (Phase 7) ───────────────
+  # - hostname: dashboard.yourdomain.com
+  #   service: http://localhost:3000
+
+  # ── Fallback — required by cloudflared ────────
+  - service: http_status:404
