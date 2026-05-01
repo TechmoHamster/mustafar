@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.mustafar.smart.plist
+  Daily SMART disk health check — runs at 8:00 AM
+
+  Install:
+    cp launchd/com.mustafar.smart.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.mustafar.smart.plist
+
+  Check status:
+    launchctl list | grep mustafar
+
+  View logs:
+    tail -f /var/log/mustafar/smart_check.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mustafar.smart</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/admin/mustafar-playbook/scripts/smart_check.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>8</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/mustafar/smart_check.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/mustafar/smart_check_err.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
