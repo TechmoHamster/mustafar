@@ -67,7 +67,8 @@ const files=[
 ['scripts/smart_check.sh','SMART disk health monitor.'],
 ['scripts/restic_backup.sh','Restic backup automation.'],
 ['launchd/com.mustafar.smart.plist','Daily SMART check schedule.'],
-['launchd/com.mustafar.backup.plist','Hourly Restic backup schedule.']
+['launchd/com.mustafar.backup.plist','Hourly Restic backup schedule.'],
+['scripts/d_smb.sh','SMB setup helper/checklist for sharing configuration.']
 ];
 const server=[
 {n:'0',id:'server-0',title:'Baseline inventory and safety prep',desc:'Document the machine before making service, storage, or OpenCore changes.',tags:['audit','snapshot','safe start'],checks:['Record current macOS version, OpenCore version, boot picker behavior, and drive layout.','Run Disk Utility First Aid on the boot SSD and all internal HDDs.','Export installed apps, launch agents, and existing Homebrew packages.','Confirm local admin access, keyboard, monitor, and recovery media are available.'],cmd:`sw_vers
@@ -80,14 +81,14 @@ brew list --versions 2>/dev/null || true`},
 sudo mkdir -p /Volumes/Mustafar-Archive/{restic-repo,Cold-Storage,Old-Projects}
 sudo mkdir -p /var/log/mustafar /var/mustafar
 sudo touch /var/mustafar/pipeline_state.json`},
-{n:'2',id:'server-2',title:'Homebrew bootstrap',desc:'Install the base command-line and server tooling.',tags:['brew','tools','bootstrap'],checks:['Install or repair Homebrew first.','Run the root Brewfile or the v2 config/Brewfile intentionally; do not mix without reviewing packages.','Verify git, jq, smartctl, restic, cloudflared, and Node are available if needed.','Treat OrbStack/Docker as a test point under OCLP before depending on it.'],cmd:`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+{n:'2',id:'server-2',title:'Homebrew bootstrap',file:'scripts/a_homebrew.sh',desc:'Install the base command-line and server tooling.',tags:['brew','tools','bootstrap'],checks:['Install or repair Homebrew first.','Run the root Brewfile or the v2 config/Brewfile intentionally; do not mix without reviewing packages.','Verify git, jq, smartctl, restic, cloudflared, and Node are available if needed.','Treat OrbStack/Docker as a test point under OCLP before depending on it.'],cmd:`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Original package
 brew bundle --file=Brewfile
 
 # v2 package alternative
 brew bundle --file=config/Brewfile`},
-{n:'3',id:'server-3',title:'Container runtime and Portainer',desc:'Bring up Docker/OrbStack management before other containerized services.',tags:['docker','portainer','containers'],checks:['Launch OrbStack or Docker Desktop and confirm docker ps works.','Start Portainer from either docker/portainer.yml or config/docker-compose.yml.','Create the local Portainer admin user.','Do not expose Portainer publicly until Cloudflare Access is configured.'],cmd:`docker version
+{n:'3',id:'server-3',title:'Container runtime and Portainer',file:'config/docker-compose.yml',desc:'Bring up Docker/OrbStack management before other containerized services.',tags:['docker','portainer','containers'],checks:['Launch OrbStack or Docker Desktop and confirm docker ps works.','Start Portainer from either docker/portainer.yml or config/docker-compose.yml.','Create the local Portainer admin user.','Do not expose Portainer publicly until Cloudflare Access is configured.'],cmd:`docker version
 docker compose -f docker/portainer.yml up -d
 # or v2 combined stack:
 docker compose -f config/docker-compose.yml up -d portainer
@@ -105,7 +106,7 @@ chmod +x scripts/restic_backup.sh
 restic -r /Volumes/Mustafar-Archive/restic-repo snapshots
 mkdir -p /tmp/mustafar-restore-test
 restic -r /Volumes/Mustafar-Archive/restic-repo restore latest --target /tmp/mustafar-restore-test`},
-{n:'6',id:'server-6',title:'Remote access and tunnels',desc:'Use Tailscale for private machine access and Cloudflare Access for browser apps.',tags:['tailscale','cloudflare','zero trust'],checks:['Sign into Tailscale and verify the machine appears in the tailnet.','Create the Cloudflare tunnel named mustafar.','Replace placeholder hostnames and tunnel IDs in config/cloudflared.yml.','Protect every public hostname with Cloudflare Access policies.'],cmd:`tailscale status
+{n:'6',id:'server-6',title:'Remote access and tunnels',file:'scripts/c_tailscale.sh',desc:'Use Tailscale for private machine access and Cloudflare Access for browser apps.',tags:['tailscale','cloudflare','zero trust'],checks:['Sign into Tailscale and verify the machine appears in the tailnet.','Create the Cloudflare tunnel named mustafar.','Replace placeholder hostnames and tunnel IDs in config/cloudflared.yml.','Protect every public hostname with Cloudflare Access policies.'],cmd:`tailscale status
 cloudflared tunnel login
 cloudflared tunnel create mustafar
 cloudflared tunnel route dns mustafar portainer.yourdomain.com
@@ -119,7 +120,7 @@ open http://localhost:3000`},
 ./scripts/ingest.sh
 tail -n 80 /var/log/mustafar/ingest.log
 ls -lah /Volumes/Mustafar-Primary/000_Ingest`},
-{n:'9',id:'server-9',title:'SMART health automation',desc:'Schedule daily disk health checks and catch failing drives early.',tags:['smart','launchd','disk health'],checks:['Make smart_check.sh executable.','Run the script manually and review the log.','Install the launchd plist after manual success.','Future improvement: replace desktop-only alerts with email or Telegram notifications.'],cmd:`chmod +x scripts/smart_check.sh
+{n:'9',id:'server-9',title:'SMART health automation',file:'scripts/e_launch.sh',desc:'Schedule daily disk health checks and catch failing drives early.',tags:['smart','launchd','disk health'],checks:['Make smart_check.sh executable.','Run the script manually and review the log.','Install the launchd plist after manual success.','Future improvement: replace desktop-only alerts with email or Telegram notifications.'],cmd:`chmod +x scripts/smart_check.sh
 ./scripts/smart_check.sh
 cp launchd/com.mustafar.smart.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.mustafar.smart.plist
