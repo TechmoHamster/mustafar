@@ -1,601 +1,183 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mustafar Server Playbook</title>
-  <style>
-    :root {
-      --bg: #0b0f14;
-      --panel: rgba(18, 24, 33, 0.86);
-      --panel-2: rgba(25, 35, 48, 0.82);
-      --text: #eef4ff;
-      --muted: #99a7ba;
-      --line: rgba(255,255,255,0.12);
-      --accent: #ff6b2c;
-      --accent-2: #ffb14a;
-      --good: #4ade80;
-      --warn: #facc15;
-      --bad: #fb7185;
-      --code: #071018;
-      --shadow: 0 18px 60px rgba(0,0,0,0.38);
-      --radius: 20px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 18% 5%, rgba(255, 107, 44, 0.24), transparent 34%),
-        radial-gradient(circle at 80% 12%, rgba(255, 177, 74, 0.16), transparent 30%),
-        linear-gradient(135deg, #06080c 0%, #0d141c 46%, #160c08 100%);
-      min-height: 100vh;
-    }
-    a { color: var(--accent-2); text-decoration: none; }
-    header {
-      padding: 56px 24px 24px;
-      max-width: 1180px;
-      margin: 0 auto;
-    }
-    .eyebrow {
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      padding: 8px 12px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(14px);
-      font-size: 13px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-    }
-    h1 {
-      margin: 18px 0 10px;
-      font-size: clamp(42px, 7vw, 86px);
-      line-height: .9;
-      letter-spacing: -0.07em;
-    }
-    .subtitle {
-      max-width: 780px;
-      color: #c7d2e3;
-      font-size: clamp(17px, 2vw, 22px);
-      line-height: 1.45;
-      margin: 0;
-    }
-    main {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 16px 24px 80px;
-    }
-    .top-grid {
-      display: grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 18px;
-      margin: 26px 0;
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      overflow: hidden;
-    }
-    .card-pad { padding: 22px; }
-    .progress-wrap {
-      display: grid;
-      gap: 14px;
-    }
-    .progress-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .progress-bar {
-      height: 14px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--line);
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      transition: width .25s ease;
-    }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    button, .btn {
-      appearance: none;
-      border: 1px solid var(--line);
-      color: var(--text);
-      background: rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 10px 13px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    }
-    button:hover, .btn:hover { transform: translateY(-1px); border-color: rgba(255,177,74,.55); background: rgba(255,177,74,.1); }
-    .primary { background: linear-gradient(135deg, rgba(255,107,44,.95), rgba(255,177,74,.9)); color: #160c08; border: 0; }
-    .meta-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .metric {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-    }
-    .metric b { display:block; font-size: 20px; margin-bottom: 3px; }
-    .metric span { color: var(--muted); font-size: 13px; }
-    .phase-list { display: grid; gap: 16px; }
-    details.phase {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    details[open] summary { border-bottom: 1px solid var(--line); }
-    summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 18px 20px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 14px;
-      align-items: center;
-    }
-    summary::-webkit-details-marker { display:none; }
-    .phase-num {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: rgba(255,107,44,.14);
-      border: 1px solid rgba(255,177,74,.28);
-      color: var(--accent-2);
-      font-weight: 900;
-    }
-    .phase-title h2 { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.03em; }
-    .phase-title p { margin: 0; color: var(--muted); font-size: 14px; }
-    .phase-state { color: var(--muted); font-size: 13px; }
-    .phase-body { padding: 20px; display: grid; gap: 18px; }
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    h3 { margin: 0 0 10px; font-size: 16px; color: #f8fafc; }
-    ul.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-    .checklist li {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 10px;
-      align-items: start;
-      color: #d9e3f2;
-      line-height: 1.35;
-    }
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent);
-      margin-top: 1px;
-    }
-    .note {
-      border-left: 4px solid var(--accent);
-      background: rgba(255,107,44,.08);
-      padding: 12px 14px;
-      border-radius: 12px;
-      color: #f5d8c8;
-      line-height: 1.45;
-    }
-    .warn { border-left-color: var(--warn); background: rgba(250,204,21,.08); color: #fef3c7; }
-    .danger { border-left-color: var(--bad); background: rgba(251,113,133,.08); color: #ffe4e9; }
-    pre {
-      margin: 0;
-      background: var(--code);
-      border: 1px solid rgba(148,163,184,.18);
-      border-radius: 16px;
-      overflow: auto;
-      padding: 16px;
-      color: #d8e7ff;
-      font-size: 13px;
-      line-height: 1.55;
-    }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .code-head {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-    .code-head span { color: var(--muted); font-size: 13px; }
-    .copy { padding: 7px 10px; font-size: 12px; }
-    .pill-row { display:flex; flex-wrap:wrap; gap:8px; }
-    .pill {
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      color: #cbd5e1;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    footer { color: var(--muted); padding: 30px 0 0; text-align: center; }
-    @media (max-width: 860px) {
-      .top-grid, .split { grid-template-columns: 1fr; }
-      summary { grid-template-columns: auto 1fr; }
-      .phase-state { grid-column: 2; }
-    }
-    @media print {
-      body { background: #fff; color: #111827; }
-      .card, details.phase { box-shadow: none; border-color: #d1d5db; background: #fff; }
-      button, .actions { display:none !important; }
-      details.phase { break-inside: avoid; }
-      details.phase:not([open]) .phase-body { display: block; }
-      .subtitle, .phase-title p, .metric span, .phase-state, footer { color: #374151; }
-      pre { white-space: pre-wrap; background: #f3f4f6; color: #111827; }
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mustafar Playbook</title>
+<style>
+:root{--bg:#090909;--surface:#111114;--surface2:#18181d;--border:#2a2a32;--text:#d4cfc8;--bright:#f0ebe3;--dim:#7a7570;--ember:#e8620a;--amber:#f5a623;--green:#4ecb82;--red:#e84848;--blue:#5aa8f0;--shadow:0 22px 70px rgba(0,0,0,.45);font-family:Barlow,Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);background:radial-gradient(circle at 16% 0%,rgba(232,98,10,.28),transparent 35%),radial-gradient(circle at 85% 12%,rgba(245,166,35,.12),transparent 32%),linear-gradient(135deg,#070707,#111114 48%,#1b0d05)}a{color:var(--amber);text-decoration:none}header,main{max-width:1240px;margin:0 auto;padding:28px 22px}header{padding-top:54px}.eyebrow{display:inline-flex;gap:9px;align-items:center;border:1px solid var(--border);background:rgba(255,255,255,.035);border-radius:999px;padding:8px 12px;color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em}h1{margin:16px 0 10px;color:var(--bright);font-size:clamp(44px,7vw,90px);line-height:.9;letter-spacing:-.055em}h2,h3{color:var(--bright);margin:0}.subtitle{max-width:900px;margin:0;color:#c8c0b7;font-size:clamp(17px,2vw,22px);line-height:1.45}.shell{display:grid;gap:18px}.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:18px}.card,.phase{background:rgba(17,17,20,.88);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}.pad{padding:22px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stat{background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:16px;padding:14px}.stat b{display:block;color:var(--bright);font-size:25px}.stat span{font-size:13px;color:var(--dim)}.bar{height:13px;border-radius:999px;background:rgba(255,255,255,.075);border:1px solid var(--border);overflow:hidden}.fill{height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--amber));transition:.2s}button{border:1px solid var(--border);background:rgba(255,255,255,.055);color:var(--bright);font-weight:800;border-radius:12px;padding:10px 12px;cursor:pointer}button:hover{border-color:rgba(245,166,35,.55);background:rgba(245,166,35,.08)}.primary{border:0;background:linear-gradient(135deg,var(--ember),var(--amber));color:#1b0d05}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.actions{display:flex;gap:9px;flex-wrap:wrap}.tabs{position:sticky;top:0;z-index:3;display:flex;gap:9px;flex-wrap:wrap;padding:12px 0;background:linear-gradient(180deg,rgba(9,9,9,.95),rgba(9,9,9,.7));backdrop-filter:blur(12px)}.tab-btn.active{background:rgba(232,98,10,.2);border-color:rgba(245,166,35,.55);color:var(--amber)}.tab{display:none}.tab.active{display:grid;gap:16px}.overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.tile{padding:18px;border:1px solid var(--border);border-radius:20px;background:rgba(255,255,255,.035);cursor:pointer}.tile:hover{border-color:rgba(245,166,35,.45)}.tile small{color:var(--amber);font-weight:900;text-transform:uppercase;letter-spacing:.06em}.tile h3{margin:8px 0 6px;font-size:20px}.tile p{margin:0;color:#b8aea5;line-height:1.4}.phase summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:18px 20px}.phase summary::-webkit-details-marker{display:none}.phase[open] summary{border-bottom:1px solid var(--border)}.num{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;border:1px solid rgba(245,166,35,.28);background:rgba(232,98,10,.12);color:var(--amber);font-weight:950}.phase-title p{margin:4px 0 0;color:var(--dim);font-size:14px}.tag{color:var(--dim);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.body{display:grid;gap:16px;padding:20px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.checklist{list-style:none;margin:0;padding:0;display:grid;gap:10px}.checklist li{display:grid;grid-template-columns:auto 1fr;gap:10px;line-height:1.35}.checklist input{width:18px;height:18px;accent-color:var(--ember);margin-top:1px}.note{border-left:4px solid var(--ember);background:rgba(232,98,10,.08);border-radius:13px;padding:12px 14px;color:#f4d0bd;line-height:1.45}.warn{border-left-color:var(--amber);background:rgba(245,166,35,.08);color:#f8e6bf}.danger{border-left-color:var(--red);background:rgba(232,72,72,.09);color:#ffd5d5}.good{border-left-color:var(--green);background:rgba(78,203,130,.08);color:#d4ffe4}.code-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.code-head span{font-size:13px;color:var(--dim)}pre{margin:0;background:#06080b;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:15px;overflow:auto;color:#dce8ff;font-size:13px;line-height:1.55}code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.pillrow{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.04);padding:7px 10px;color:#cfc7bd;font-size:12px;font-weight:800}.file-list{display:grid;gap:10px}.file-item{display:grid;grid-template-columns:1fr auto;gap:12px;border:1px solid var(--border);border-radius:16px;padding:13px;background:rgba(255,255,255,.035)}footer{text-align:center;color:var(--dim);padding:36px 0 70px}@media(max-width:900px){.hero-grid,.split,.overview-grid{grid-template-columns:1fr}.phase summary{grid-template-columns:auto 1fr}.tag{grid-column:2}}@media print{body{background:#fff;color:#111}.tabs,.actions,button{display:none!important}.card,.phase{box-shadow:none;background:#fff;border-color:#ddd}.tab{display:grid!important}.phase{break-inside:avoid}pre{white-space:pre-wrap;color:#111;background:#f3f4f6}.subtitle,.phase-title p,.tag,.stat span{color:#444}}
+</style>
 </head>
 <body>
-  <header>
-    <div class="eyebrow">Mustafar · Mac Pro 5,1 · Server Conversion</div>
-    <h1>Mustafar Server Playbook</h1>
-    <p class="subtitle">A practical phase-by-phase setup guide for turning the 2012 Mac Pro into a real creative server: storage, backups, containers, monitoring, remote access, dashboarding, and optional local AI.</p>
-  </header>
-
-  <main>
-    <section class="top-grid">
-      <div class="card card-pad progress-wrap">
-        <div class="progress-row"><strong>Overall completion</strong><span id="progressText">0% complete</span></div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="actions">
-          <button class="primary" onclick="expandAll()">Expand all phases</button>
-          <button onclick="collapseAll()">Collapse all</button>
-          <button onclick="window.print()">Print / Save PDF</button>
-          <button onclick="resetProgress()">Reset checkboxes</button>
-        </div>
-        <div class="note">Progress is stored locally in this browser using localStorage. It does not write to the repo or to Mustafar.</div>
-      </div>
-      <div class="card card-pad">
-        <div class="meta-grid">
-          <div class="metric"><b>11</b><span>Implementation phases</span></div>
-          <div class="metric"><b>4</b><span>Core Docker stacks</span></div>
-          <div class="metric"><b>2</b><span>launchd schedules</span></div>
-          <div class="metric"><b>3</b><span>Automation scripts</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="phase-list" id="phases"></section>
-
-    <footer>Mustafar Playbook · Keep backups verified before enabling remote access.</footer>
-  </main>
-
-  <script>
-    const phases = [
-      {
-        n: 0,
-        title: "Baseline inventory and safety prep",
-        desc: "Document the current machine before touching disks, OpenCore, or services.",
-        tags: ["audit", "no changes", "snapshot"],
-        checks: [
-          "Record current macOS version, OpenCore version, and boot picker behavior.",
-          "Run Disk Utility First Aid on the boot SSD and all internal HDDs.",
-          "Export a list of installed apps, launch agents, and Homebrew packages if present.",
-          "Confirm you have a known-good keyboard, monitor, and local admin account before remote-only work.",
-          "Photograph the internal drive layout and label each bay logically."
-        ],
-        commandTitle: "Baseline commands",
-        command: `sw_vers
+<header>
+  <div class="eyebrow">Mustafar · Mac Pro 5,1 · OCLP · Creative Server</div>
+  <h1>Mustafar Playbook</h1>
+  <p class="subtitle">Unified browser guide for two linked jobs: converting the Mac Pro into a practical server and upgrading the internal 500GB SSD to a 1TB SSD with a clean OCLP/macOS upgrade path.</p>
+</header>
+<main class="shell">
+  <section class="hero-grid">
+    <div class="card pad">
+      <div class="row"><strong>Overall completion</strong><span id="progressText">0% complete</span></div><br>
+      <div class="bar"><div class="fill" id="progressFill"></div></div>
+      <div class="actions" style="margin-top:14px"><button class="primary" onclick="expandAll()">Expand all</button><button onclick="collapseAll()">Collapse all</button><button onclick="window.print()">Print / Save PDF</button><button onclick="resetProgress()">Reset progress</button></div>
+      <div class="note" style="margin-top:14px">Checkbox progress is saved locally in your browser. It does not modify the repo or Mustafar.</div>
+    </div>
+    <div class="card pad stats">
+      <div class="stat"><b>2</b><span>Primary workstreams</span></div><div class="stat"><b>22</b><span>Total phase cards</span></div><div class="stat"><b>3</b><span>SSD helper scripts</span></div><div class="stat"><b>5</b><span>Playbook tabs</span></div>
+    </div>
+  </section>
+  <nav class="tabs"><button class="tab-btn active" onclick="switchTab('overview')">Overview</button><button class="tab-btn" onclick="switchTab('server')">Server Conversion</button><button class="tab-btn" onclick="switchTab('ssd')">SSD & OS Upgrade</button><button class="tab-btn" onclick="switchTab('commands')">Commands</button><button class="tab-btn" onclick="switchTab('files')">Files</button></nav>
+  <section id="overview" class="tab active">
+    <div class="card pad"><h2>Execution order</h2><p class="subtitle" style="font-size:17px">Do the SSD/OS upgrade path first if the 500GB boot SSD is being replaced soon. Once the 1TB boot drive is stable, continue the server conversion phases. Do not enable public remote access until backups have been tested.</p></div>
+    <div class="overview-grid">
+      <div class="tile" onclick="switchTab('ssd','ssd-0')"><small>First</small><h3>SSD & OS Upgrade</h3><p>Inventory, EFI backup, clone/migration plan, OCLP install, Sequoia upgrade, patches, and validation.</p></div>
+      <div class="tile" onclick="switchTab('server','server-0')"><small>Second</small><h3>Server Conversion</h3><p>Storage layout, Homebrew, Docker, monitoring, backups, Cloudflare/Tailscale, dashboarding, and automation.</p></div>
+      <div class="tile" onclick="switchTab('files')"><small>Repo package</small><h3>New v2 assets</h3><p>New config files and SSD helper scripts from the uploaded v2 ZIP are listed with their intended purpose.</p></div>
+    </div>
+    <div class="note danger">Keep the old 500GB SSD untouched for 1–2 weeks after the 1TB SSD is installed and validated. Treat it as your physical rollback drive.</div>
+  </section>
+  <section id="server" class="tab"><div id="serverPhases"></div></section>
+  <section id="ssd" class="tab"><div id="ssdPhases"></div></section>
+  <section id="commands" class="tab">
+    <div class="card pad"><h2>Fast command index</h2><p class="subtitle" style="font-size:17px">Common commands pulled from the playbook phases. Use the phase cards for full context.</p></div>
+    <div id="commandIndex"></div>
+  </section>
+  <section id="files" class="tab">
+    <div class="card pad"><h2>Repo file map</h2><p class="subtitle" style="font-size:17px">Files included in the Mustafar package after the v2 ZIP comparison.</p></div>
+    <div class="card pad file-list" id="fileList"></div>
+  </section>
+  <footer>Mustafar Playbook · Backups first, remote access second.</footer>
+</main>
+<script>
+const files=[
+['CODEX_README.md','Updated v2 handoff README with SSD/OS upgrade notes and Codex tasks.'],
+['mustafar_playbook.html','Updated self-contained browser playbook with Server Conversion and SSD & OS Upgrade tabs.'],
+['Brewfile','Original root bootstrap Brewfile for the server conversion package.'],
+['config/Brewfile','v2 Homebrew bundle for server tooling.'],
+['config/cloudflared.yml','Cloudflare Tunnel ingress config.'],
+['config/docker-compose.yml','v2 monitoring stack: Portainer, Prometheus, Grafana, Uptime Kuma. Note: references config/prometheus.yml, which was not included in the ZIP.'],
+['docker/portainer.yml','Dedicated Portainer compose stack.'],
+['docker/monitoring.yml','Netdata, Uptime Kuma, and Dozzle monitoring stack.'],
+['docker/dev.yml','Code Server, PostgreSQL, and Redis development stack.'],
+['docker/ollama.yml','Optional Ollama/Open WebUI local AI stack.'],
+['scripts/ssd_phase0_preflight.sh','New v2 preflight inventory script.'],
+['scripts/ssd_phase1_backup.sh','New v2 EFI backup helper.'],
+['scripts/ssd_phase10_validate.sh','New v2 post-upgrade validation script.'],
+['scripts/ingest.sh','Camera-card ingest automation.'],
+['scripts/smart_check.sh','SMART disk health monitor.'],
+['scripts/restic_backup.sh','Restic backup automation.'],
+['launchd/com.mustafar.smart.plist','Daily SMART check schedule.'],
+['launchd/com.mustafar.backup.plist','Hourly Restic backup schedule.']
+];
+const server=[
+{n:'0',id:'server-0',title:'Baseline inventory and safety prep',desc:'Document the machine before making service, storage, or OpenCore changes.',tags:['audit','snapshot','safe start'],checks:['Record current macOS version, OpenCore version, boot picker behavior, and drive layout.','Run Disk Utility First Aid on the boot SSD and all internal HDDs.','Export installed apps, launch agents, and existing Homebrew packages.','Confirm local admin access, keyboard, monitor, and recovery media are available.'],cmd:`sw_vers
 system_profiler SPHardwareDataType SPStorageDataType
-
 diskutil list
 mount
-
 launchctl list | grep -i -E "docker|tailscale|cloudflared|mustafar" || true
-brew list --versions 2>/dev/null || true`
-      },
-      {
-        n: 1,
-        title: "Storage layout and naming",
-        desc: "Give every drive a clear purpose before data cleanup or app setup starts.",
-        tags: ["SSD", "HDD", "creative storage"],
-        checks: [
-          "Keep the internal SSD focused on OS, apps, Docker runtime, and server tooling.",
-          "Use a primary creative volume for active RAW, selects, exports, and project files.",
-          "Use a separate archive volume for old projects, backup repositories, and cold storage.",
-          "Avoid mixing backup repositories and active working files on the same logical folder tree.",
-          "Create top-level folders before importing old loose data."
-        ],
-        commandTitle: "Suggested folder scaffold",
-        command: `sudo mkdir -p /Volumes/Mustafar-Primary/{000_Ingest,RAW,Selects,Exports,Archive,Projects}
+brew list --versions 2>/dev/null || true`},
+{n:'1',id:'server-1',title:'Storage layout and naming',desc:'Assign every disk and folder a clear purpose before importing old data.',tags:['storage','folders','creative work'],checks:['Keep the boot SSD focused on macOS, apps, Docker runtime, and tooling.','Use a primary creative volume for active RAW, selects, exports, and project files.','Use a separate archive volume for Restic repositories, old projects, and cold storage.','Create the folder scaffold before bulk cleanup or migration work.'],cmd:`sudo mkdir -p /Volumes/Mustafar-Primary/{000_Ingest,RAW,Selects,Exports,Archive,Projects}
 sudo mkdir -p /Volumes/Mustafar-Archive/{restic-repo,Cold-Storage,Old-Projects}
-sudo mkdir -p /var/log/mustafar
-sudo mkdir -p /var/mustafar
-sudo touch /var/mustafar/pipeline_state.json`
-      },
-      {
-        n: 2,
-        title: "Homebrew bootstrap",
-        desc: "Install the base server toolchain using the repo Brewfile.",
-        tags: ["brew", "tools", "bootstrap"],
-        checks: [
-          "Install or repair Homebrew first.",
-          "Run the committed Brewfile from the repo root.",
-          "Verify git, jq, smartctl, restic, cloudflared, and Node are available.",
-          "Do not depend on OrbStack until it is tested under the OpenCore-patched OS."
-        ],
-        commandTitle: "Bootstrap commands",
-        command: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+sudo mkdir -p /var/log/mustafar /var/mustafar
+sudo touch /var/mustafar/pipeline_state.json`},
+{n:'2',id:'server-2',title:'Homebrew bootstrap',desc:'Install the base command-line and server tooling.',tags:['brew','tools','bootstrap'],checks:['Install or repair Homebrew first.','Run the root Brewfile or the v2 config/Brewfile intentionally; do not mix without reviewing packages.','Verify git, jq, smartctl, restic, cloudflared, and Node are available if needed.','Treat OrbStack/Docker as a test point under OCLP before depending on it.'],cmd:`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-cd ~/mustafar
+# Original package
 brew bundle --file=Brewfile
 
-which git jq smartctl restic cloudflared node
-node --version
-restic version`
-      },
-      {
-        n: 3,
-        title: "Container runtime and Portainer",
-        desc: "Bring up Docker/OrbStack management first, then use Portainer as the control panel.",
-        tags: ["Docker", "OrbStack", "Portainer"],
-        checks: [
-          "Launch OrbStack or Docker Desktop and confirm `docker ps` works.",
-          "Start Portainer from docker/portainer.yml.",
-          "Create the initial Portainer admin user locally.",
-          "Do not expose Portainer publicly until Cloudflare Access is configured."
-        ],
-        commandTitle: "Start Portainer",
-        command: `docker version
+# v2 package alternative
+brew bundle --file=config/Brewfile`},
+{n:'3',id:'server-3',title:'Container runtime and Portainer',desc:'Bring up Docker/OrbStack management before other containerized services.',tags:['docker','portainer','containers'],checks:['Launch OrbStack or Docker Desktop and confirm docker ps works.','Start Portainer from either docker/portainer.yml or config/docker-compose.yml.','Create the local Portainer admin user.','Do not expose Portainer publicly until Cloudflare Access is configured.'],cmd:`docker version
 docker compose -f docker/portainer.yml up -d
+# or v2 combined stack:
+docker compose -f config/docker-compose.yml up -d portainer
 docker ps
+open https://localhost:9443`},
+{n:'4',id:'server-4',title:'Monitoring stack',desc:'Add visibility before automation becomes complex.',tags:['monitoring','netdata','grafana'],checks:['Start a monitoring stack: docker/monitoring.yml or config/docker-compose.yml.','Add local uptime monitors for Portainer and dashboard services.','Confirm logs and system metrics are visible.','Fix missing config dependencies before relying on the stack.'],cmd:`# Original stack: Netdata + Uptime Kuma + Dozzle
+docker compose -f docker/monitoring.yml up -d
 
-# Local URL
-open https://localhost:9443`
-      },
-      {
-        n: 4,
-        title: "Monitoring stack",
-        desc: "Add visibility before automation gets complex.",
-        tags: ["Netdata", "Uptime Kuma", "Dozzle"],
-        checks: [
-          "Start Netdata, Uptime Kuma, and Dozzle.",
-          "Add local service monitors in Uptime Kuma for Portainer, Netdata, and Dozzle.",
-          "Confirm container logs are visible in Dozzle.",
-          "Create a habit of checking monitoring before and after major changes."
-        ],
-        commandTitle: "Start monitoring",
-        command: `docker compose -f docker/monitoring.yml up -d
-
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-open http://localhost:19999
-open http://localhost:3001
-open http://localhost:8888`
-      },
-      {
-        n: 5,
-        title: "Backups before remote access",
-        desc: "Verify a real restore path before opening any remote routes.",
-        tags: ["Restic", "restore test", "critical"],
-        checks: [
-          "Initialize the Restic repo on the archive volume.",
-          "Run the backup script manually once and confirm snapshots exist.",
-          "Restore a test file to a temporary folder and verify it opens.",
-          "Install the launchd backup schedule only after the manual test succeeds.",
-          "Add cloud backup later; local verified backup comes first."
-        ],
-        commandTitle: "Initialize and test Restic",
-        command: `restic -r /Volumes/Mustafar-Archive/restic-repo init
-
+# v2 stack: Portainer + Prometheus + Grafana + Uptime Kuma
+# Requires config/prometheus.yml, not included in v2 ZIP.
+docker compose -f config/docker-compose.yml up -d`},
+{n:'5',id:'server-5',title:'Backups before remote access',desc:'Verify a real restore path before opening any remote route.',tags:['restic','restore test','critical'],checks:['Initialize the Restic repository on the archive volume.','Run the backup script manually once and confirm snapshots exist.','Restore a test file to a temporary folder and verify it opens.','Install the launchd schedule only after the manual test succeeds.'],note:'Do not enable public remote routes until this phase is complete.',cmd:`restic -r /Volumes/Mustafar-Archive/restic-repo init
 chmod +x scripts/restic_backup.sh
 ./scripts/restic_backup.sh
-
 restic -r /Volumes/Mustafar-Archive/restic-repo snapshots
 mkdir -p /tmp/mustafar-restore-test
-restic -r /Volumes/Mustafar-Archive/restic-repo restore latest --target /tmp/mustafar-restore-test`
-      },
-      {
-        n: 6,
-        title: "Remote access and tunnels",
-        desc: "Use Tailscale for machine access and Cloudflare Access for browser apps.",
-        tags: ["Tailscale", "Cloudflare", "Zero Trust"],
-        checks: [
-          "Install and sign into Tailscale for private machine access.",
-          "Create the Cloudflare tunnel named mustafar.",
-          "Replace placeholder hostnames and tunnel ID in config/cloudflared.yml.",
-          "Protect each public hostname with Cloudflare Access policies.",
-          "Confirm backups are working before leaving tunnel services enabled."
-        ],
-        commandTitle: "Cloudflare tunnel scaffold",
-        command: `tailscale status
-
+restic -r /Volumes/Mustafar-Archive/restic-repo restore latest --target /tmp/mustafar-restore-test`},
+{n:'6',id:'server-6',title:'Remote access and tunnels',desc:'Use Tailscale for private machine access and Cloudflare Access for browser apps.',tags:['tailscale','cloudflare','zero trust'],checks:['Sign into Tailscale and verify the machine appears in the tailnet.','Create the Cloudflare tunnel named mustafar.','Replace placeholder hostnames and tunnel IDs in config/cloudflared.yml.','Protect every public hostname with Cloudflare Access policies.'],cmd:`tailscale status
 cloudflared tunnel login
 cloudflared tunnel create mustafar
 cloudflared tunnel route dns mustafar portainer.yourdomain.com
-
-cloudflared tunnel --config config/cloudflared.yml run mustafar`
-      },
-      {
-        n: 7,
-        title: "Mustafar dashboard build",
-        desc: "Convert the static concept into a real Next.js dashboard wired to live services.",
-        tags: ["Next.js", "dashboard", "API"],
-        checks: [
-          "Scaffold the Next.js app in a separate folder or branch.",
-          "Wire system metrics from Netdata.",
-          "Wire container data from Portainer or Docker socket via a safe backend API.",
-          "Read/write creative pipeline state from /var/mustafar/pipeline_state.json.",
-          "Keep auth outside the app by using Cloudflare Access."
-        ],
-        commandTitle: "Dashboard scaffold",
-        command: `npx create-next-app@latest mustafar-dashboard --typescript --tailwind --app --no-git
+cloudflared tunnel --config config/cloudflared.yml run mustafar`},
+{n:'7',id:'server-7',title:'Dashboard build',desc:'Convert the playbook/dashboard concept into a real Next.js app wired to live services.',tags:['nextjs','dashboard','api'],checks:['Scaffold the Next.js app separately from this static playbook.','Wire metrics from Netdata or Prometheus.','Wire container data from Portainer or a safe backend API.','Read/write creative pipeline state from /var/mustafar/pipeline_state.json.','Keep auth outside the app with Cloudflare Access.'],cmd:`npx create-next-app@latest mustafar-dashboard --typescript --tailwind --app --no-git
 cd mustafar-dashboard
 npm install
 npm run dev
-
-# Expected local URL
-open http://localhost:3000`
-      },
-      {
-        n: 8,
-        title: "Creative ingest pipeline",
-        desc: "Use the ingest script to safely copy camera card files into the active project flow.",
-        tags: ["photo", "video", "ingest"],
-        checks: [
-          "Make scripts/ingest.sh executable.",
-          "Test with a small SD card or copied DCIM folder first.",
-          "Confirm duplicates are skipped by filename.",
-          "Review /var/log/mustafar/ingest.log after every first test.",
-          "Future upgrade: add EXIF-based sorting into RAW/YYYY/MM."
-        ],
-        commandTitle: "Run ingest manually",
-        command: `chmod +x scripts/ingest.sh
+open http://localhost:3000`},
+{n:'8',id:'server-8',title:'Creative ingest pipeline',desc:'Safely copy camera card files into the active project flow.',tags:['photo','video','ingest'],checks:['Make scripts/ingest.sh executable.','Test with a small SD card or copied DCIM folder first.','Confirm duplicates are skipped by filename.','Review /var/log/mustafar/ingest.log after the first test.'],cmd:`chmod +x scripts/ingest.sh
 ./scripts/ingest.sh
-
 tail -n 80 /var/log/mustafar/ingest.log
-ls -lah /Volumes/Mustafar-Primary/000_Ingest`
-      },
-      {
-        n: 9,
-        title: "SMART health automation",
-        desc: "Schedule daily disk health checks and catch failing drives early.",
-        tags: ["SMART", "launchd", "disk health"],
-        checks: [
-          "Make smart_check.sh executable.",
-          "Run the script manually and review the log output.",
-          "Install the launchd plist after manual success.",
-          "Future upgrade: replace desktop notifications with email or Telegram alerts."
-        ],
-        commandTitle: "Install SMART check schedule",
-        command: `chmod +x scripts/smart_check.sh
+ls -lah /Volumes/Mustafar-Primary/000_Ingest`},
+{n:'9',id:'server-9',title:'SMART health automation',desc:'Schedule daily disk health checks and catch failing drives early.',tags:['smart','launchd','disk health'],checks:['Make smart_check.sh executable.','Run the script manually and review the log.','Install the launchd plist after manual success.','Future improvement: replace desktop-only alerts with email or Telegram notifications.'],cmd:`chmod +x scripts/smart_check.sh
 ./scripts/smart_check.sh
-
 cp launchd/com.mustafar.smart.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.mustafar.smart.plist
 launchctl list | grep mustafar
-
-tail -f /var/log/mustafar/smart_check.log`
-      },
-      {
-        n: 10,
-        title: "Optional local AI services",
-        desc: "Only add Ollama/Open WebUI after the server basics are stable.",
-        tags: ["Ollama", "Open WebUI", "optional"],
-        checks: [
-          "Start with a small 1B or 3B model to benchmark CPU inference.",
-          "Do not assume Vega 64 GPU acceleration will work under OpenCore.",
-          "Keep local AI isolated from backup-critical storage paths.",
-          "Monitor thermals during the first long inference session."
-        ],
-        commandTitle: "Start Ollama stack",
-        command: `docker compose -f docker/ollama.yml up -d
+tail -f /var/log/mustafar/smart_check.log`},
+{n:'10',id:'server-10',title:'Optional local AI services',desc:'Add Ollama/Open WebUI only after the server basics are stable.',tags:['ollama','open webui','optional'],checks:['Start with a small 1B or 3B model to benchmark CPU inference.','Do not assume Vega 64 GPU acceleration will work under OpenCore.','Keep local AI isolated from backup-critical storage paths.','Monitor thermals during the first long inference session.'],cmd:`docker compose -f docker/ollama.yml up -d
 curl http://localhost:11434/api/tags
-
-# Example small model test
 # docker exec -it ollama ollama pull llama3.2:1b
-# docker exec -it ollama ollama run llama3.2:1b`
-      }
-    ];
-
-    function phaseTemplate(p) {
-      const checks = p.checks.map((item, i) => `
-        <li><input type="checkbox" data-key="phase-${p.n}-${i}"><span>${item}</span></li>`).join('');
-      const tags = p.tags.map(t => `<span class="pill">${t}</span>`).join('');
-      const warning = p.n === 5 ? '<div class="note danger">Do not enable public remote routes until this phase has been completed and a restore test succeeds.</div>' : '';
-      return `
-        <details class="phase" ${p.n === 0 ? 'open' : ''}>
-          <summary>
-            <div class="phase-num">${p.n}</div>
-            <div class="phase-title"><h2>${p.title}</h2><p>${p.desc}</p></div>
-            <div class="phase-state" id="state-${p.n}">0/${p.checks.length}</div>
-          </summary>
-          <div class="phase-body">
-            <div class="pill-row">${tags}</div>
-            ${warning}
-            <div class="split">
-              <div>
-                <h3>Checklist</h3>
-                <ul class="checklist">${checks}</ul>
-              </div>
-              <div>
-                <div class="code-head"><span>${p.commandTitle}</span><button class="copy" onclick="copyCommand(${p.n})">Copy</button></div>
-                <pre><code id="cmd-${p.n}">${escapeHtml(p.command)}</code></pre>
-              </div>
-            </div>
-          </div>
-        </details>`;
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    }
-
-    function render() {
-      document.getElementById('phases').innerHTML = phases.map(phaseTemplate).join('');
-      document.querySelectorAll('input[type="checkbox"]').forEach(box => {
-        box.checked = localStorage.getItem('mustafar-' + box.dataset.key) === 'true';
-        box.addEventListener('change', () => {
-          localStorage.setItem('mustafar-' + box.dataset.key, box.checked);
-          updateProgress();
-        });
-      });
-      updateProgress();
-    }
-
-    function updateProgress() {
-      let total = 0, done = 0;
-      phases.forEach(p => {
-        let phaseDone = 0;
-        p.checks.forEach((_, i) => {
-          total++;
-          const checked = document.querySelector(`[data-key="phase-${p.n}-${i}"]`)?.checked;
-          if (checked) { done++; phaseDone++; }
-        });
-        const el = document.getElementById('state-' + p.n);
-        if (el) el.textContent = `${phaseDone}/${p.checks.length}`;
-      });
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      document.getElementById('progressText').textContent = `${pct}% complete · ${done}/${total} tasks`;
-      document.getElementById('progressFill').style.width = pct + '%';
-    }
-
-    function copyCommand(n) {
-      const text = phases.find(p => p.n === n).command;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = event.target;
-        const old = btn.textContent;
-        btn.textContent = 'Copied';
-        setTimeout(() => btn.textContent = old, 900);
-      });
-    }
-
-    function expandAll() { document.querySelectorAll('details.phase').forEach(d => d.open = true); }
-    function collapseAll() { document.querySelectorAll('details.phase').forEach(d => d.open = false); }
-    function resetProgress() {
-      if (!confirm('Reset all Mustafar playbook checkboxes in this browser?')) return;
-      document.querySelectorAll('input[type="checkbox"]').forEach(box => {
-        localStorage.removeItem('mustafar-' + box.dataset.key);
-        box.checked = false;
-      });
-      updateProgress();
-    }
-
-    render();
-  </script>
+# docker exec -it ollama ollama run llama3.2:1b`}
+];
+const ssd=[
+{n:'0',id:'ssd-0',title:'Preflight inventory',desc:'Capture Mustafar exactly as it exists before opening the machine.',tags:['script','inventory','before changes'],file:'scripts/ssd_phase0_preflight.sh',checks:['Run the Phase 0 preflight script.','Copy the generated ZIP somewhere outside the 500GB SSD, preferably Tatooine or an external drive.','Take photos of the current drive bay and internal layout.','Verify Ethernet works before depending on any OS installer.'],cmd:`chmod +x scripts/ssd_phase0_preflight.sh
+./scripts/ssd_phase0_preflight.sh`},
+{n:'1',id:'ssd-1',title:'EFI and OpenCore backup',desc:'Back up the existing EFI/OpenCore setup before changing drives or OS versions.',tags:['script','efi','rollback'],file:'scripts/ssd_phase1_backup.sh',checks:['Run diskutil list and identify the correct EFI partition.','Run the EFI backup script with the EFI partition identifier.','Copy the ZIP backup to external storage or Tatooine.','Do not overwrite or erase the old SSD after backup.'],cmd:`diskutil list
+chmod +x scripts/ssd_phase1_backup.sh
+./scripts/ssd_phase1_backup.sh /dev/diskXs1`},
+{n:'2',id:'ssd-2',title:'Full system backup',desc:'Create a complete safety net before cloning or migrating.',tags:['backup','rollback','safety'],checks:['Make a Time Machine or equivalent full backup.','Confirm the backup is visible from another machine or external disk.','Export important configs and app preferences where possible.','Keep at least one backup physically separate from the Mac Pro.'],cmd:`tmutil destinationinfo || true
+tmutil listbackups || true
+# Use Time Machine UI or your preferred clone tool for the full backup.`},
+{n:'3',id:'ssd-3',title:'Prepare the 1TB SSD',desc:'Format the new SSD cleanly and verify it before migration.',tags:['1TB SSD','format','APFS'],checks:['Install the 1TB SSD in an accessible bay or external SATA adapter.','Erase as GUID Partition Map + APFS.','Name it clearly so it cannot be confused with the 500GB boot SSD.','Run First Aid after formatting.'],cmd:`diskutil list
+# Replace diskX carefully.
+diskutil eraseDisk APFS Mustafar-1TB GPT /dev/diskX
+diskutil verifyDisk /dev/diskX`},
+{n:'4',id:'ssd-4',title:'Choose migration method',desc:'Pick clone or clean install based on risk tolerance.',tags:['clone','clean install','decision'],checks:['Use clone if you need fastest continuity and the current OS is healthy.','Use clean install if the current boot volume is messy, unstable, or overloaded.','Do not erase the old 500GB SSD either way.','Write down which method you chose and why.'],cmd:`# Clone option: use Carbon Copy Cloner / SuperDuper / Disk Utility restore.
+# Clean install option: install macOS via OCLP-created installer, then migrate data manually.`},
+{n:'5',id:'ssd-5',title:'Build OCLP installer',desc:'Create the supported OCLP install path before changing the boot drive.',tags:['OCLP','installer','Sequoia'],checks:['Use macOS Sequoia as the target, not Tahoe, for the first upgrade attempt.','Create the installer using OpenCore Legacy Patcher.','Keep Ethernet available because Wi-Fi may not work until root patches are installed.','Confirm the installer boots before removing the old SSD.'],cmd:`# In OpenCore Legacy Patcher:
+# 1. Create macOS Installer
+# 2. Download macOS Sequoia
+# 3. Build and Install OpenCore to the USB EFI
+# 4. Reboot and test the picker`},
+{n:'6',id:'ssd-6',title:'Install or clone to 1TB SSD',desc:'Move the system to the new SSD using the chosen method.',tags:['migration','install','clone'],checks:['Boot from the OCLP installer or clone tool.','Install/clone to the 1TB SSD only.','Do not erase the 500GB SSD.','After the first boot, confirm the system is actually running from the 1TB SSD.'],cmd:`diskutil info / | grep -E "Device Identifier|Volume Name|APFS|Protocol"
+diskutil list`},
+{n:'7',id:'ssd-7',title:'Install OpenCore to internal EFI',desc:'Make the 1TB SSD independently bootable.',tags:['opencore','efi','boot'],checks:['Use OCLP to build and install OpenCore to the 1TB SSD EFI.','Keep the boot picker visible during the first few weeks.','Confirm the Mac can boot without the USB installer.','Keep the old SSD available as rollback.'],cmd:`# In OCLP:
+# Build and Install OpenCore
+# Select the 1TB SSD EFI partition
+# Reboot and select EFI Boot from the picker`},
+{n:'8',id:'ssd-8',title:'Apply OCLP root patches',desc:'Restore graphics, Wi-Fi/Bluetooth, and other patched hardware behavior.',tags:['root patches','graphics','wifi'],checks:['Run OCLP Post-Install Root Patch after booting the new OS.','Reboot after patching.','Verify graphics acceleration and display behavior.','Verify Wi-Fi and Bluetooth after patches.'],cmd:`# In OCLP:
+# Post-Install Root Patch > Start Root Patching
+# Reboot when prompted
+system_profiler SPDisplaysDataType
+networksetup -listallhardwareports`},
+{n:'9',id:'ssd-9',title:'Restore services and apps',desc:'Bring back server services gradually instead of all at once.',tags:['services','docker','launchd'],checks:['Verify core apps and data first.','Start Docker/OrbStack and test containers.','Load launchd jobs one at a time.','Check logs after each service comes back online.'],cmd:`docker ps
+launchctl list | grep mustafar || true
+tail -n 80 /var/log/mustafar/backup.log 2>/dev/null || true
+tail -n 80 /var/log/mustafar/smart_check.log 2>/dev/null || true`},
+{n:'10',id:'ssd-10',title:'Post-upgrade validation',desc:'Compare the new system against the Phase 0 report before declaring the upgrade done.',tags:['script','validation','final check'],file:'scripts/ssd_phase10_validate.sh',checks:['Run the Phase 10 validation script.','Compare the report against the Phase 0 preflight ZIP.','Verify boot behavior, graphics, networking, storage, Docker, and backups.','Leave the old 500GB SSD untouched for 1–2 weeks.'],cmd:`chmod +x scripts/ssd_phase10_validate.sh
+./scripts/ssd_phase10_validate.sh`}
+];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function phaseTpl(p,group){let checks=p.checks.map((c,i)=>`<li><input type="checkbox" data-key="${group}-${p.n}-${i}"><span>${esc(c)}</span></li>`).join('');let tags=p.tags.map(t=>`<span class="pill">${esc(t)}</span>`).join('');let file=p.file?`<a href="${esc(p.file)}" download>${esc(p.file)} ↓</a>`:'';let note=p.note?`<div class="note danger">${esc(p.note)}</div>`:'';return `<details class="phase" id="${p.id}"><summary><div class="num">${p.n}</div><div class="phase-title"><h2>${esc(p.title)}</h2><p>${esc(p.desc)}</p></div><div class="tag" id="state-${group}-${p.n}">${file}</div></summary><div class="body"><div class="pillrow">${tags}</div>${note}<div class="split"><div><h3>Checklist</h3><ul class="checklist">${checks}</ul></div><div><div class="code-head"><span>Command block</span><button onclick="copyText('${group}', '${p.n}')">Copy</button></div><pre><code id="cmd-${group}-${p.n}">${esc(p.cmd)}</code></pre></div></div></div></details>`}
+function render(){document.getElementById('serverPhases').innerHTML=server.map(p=>phaseTpl(p,'server')).join('');document.getElementById('ssdPhases').innerHTML=ssd.map(p=>phaseTpl(p,'ssd')).join('');document.getElementById('commandIndex').innerHTML=[...server.map(p=>({...p,g:'server'})),...ssd.map(p=>({...p,g:'ssd'}))].map(p=>`<div class="card pad"><div class="code-head"><span>${esc(p.g.toUpperCase())} · ${esc(p.n)} · ${esc(p.title)}</span><button onclick="copyText('${p.g}','${p.n}')">Copy</button></div><pre><code id="cmd-index-${p.g}-${p.n}">${esc(p.cmd)}</code></pre></div>`).join('');document.getElementById('fileList').innerHTML=files.map(f=>`<div class="file-item"><div><strong>${esc(f[0])}</strong><br><span style="color:var(--dim)">${esc(f[1])}</span></div><a href="${esc(f[0])}" download>download</a></div>`).join('');document.querySelectorAll('input[type="checkbox"]').forEach(b=>{b.checked=localStorage.getItem('mustafar-'+b.dataset.key)==='true';b.addEventListener('change',()=>{localStorage.setItem('mustafar-'+b.dataset.key,b.checked);updateProgress();});});updateProgress();}
+function switchTab(id,phaseId){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(id).classList.add('active');[...document.querySelectorAll('.tab-btn')].find(b=>b.textContent.toLowerCase().includes(id==='ssd'?'ssd':id==='server'?'server':id))?.classList.add('active');if(phaseId)setTimeout(()=>{let el=document.getElementById(phaseId);if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'start'});}},100)}
+function updateProgress(){let boxes=[...document.querySelectorAll('input[type="checkbox"]')],done=boxes.filter(b=>b.checked).length,total=boxes.length,pct=total?Math.round(done/total*100):0;document.getElementById('progressText').textContent=`${pct}% complete · ${done}/${total} tasks`;document.getElementById('progressFill').style.width=pct+'%';}
+function copyText(group,n){let el=document.getElementById(`cmd-${group}-${n}`)||document.getElementById(`cmd-index-${group}-${n}`);navigator.clipboard.writeText(el.innerText);}
+function expandAll(){document.querySelectorAll('details.phase').forEach(d=>d.open=true)}
+function collapseAll(){document.querySelectorAll('details.phase').forEach(d=>d.open=false)}
+function resetProgress(){if(!confirm('Reset all Mustafar playbook checkboxes in this browser?'))return;document.querySelectorAll('input[type="checkbox"]').forEach(b=>{localStorage.removeItem('mustafar-'+b.dataset.key);b.checked=false});updateProgress();}
+render();
+</script>
 </body>
 </html>
