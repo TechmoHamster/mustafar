@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.mustafar.backup.plist
+  Hourly Restic backup — runs at :00 every hour
+
+  Install:
+    cp launchd/com.mustafar.backup.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.mustafar.backup.plist
+
+  Run manually:
+    launchctl start com.mustafar.backup
+
+  View logs:
+    tail -f /var/log/mustafar/backup.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mustafar.backup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/admin/mustafar-playbook/scripts/restic_backup.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/mustafar/backup.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/mustafar/backup_err.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
