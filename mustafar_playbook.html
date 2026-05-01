@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mustafar Server Playbook</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: rgba(18, 24, 33, 0.86);
+      --panel-2: rgba(25, 35, 48, 0.82);
+      --text: #eef4ff;
+      --muted: #99a7ba;
+      --line: rgba(255,255,255,0.12);
+      --accent: #ff6b2c;
+      --accent-2: #ffb14a;
+      --good: #4ade80;
+      --warn: #facc15;
+      --bad: #fb7185;
+      --code: #071018;
+      --shadow: 0 18px 60px rgba(0,0,0,0.38);
+      --radius: 20px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 5%, rgba(255, 107, 44, 0.24), transparent 34%),
+        radial-gradient(circle at 80% 12%, rgba(255, 177, 74, 0.16), transparent 30%),
+        linear-gradient(135deg, #06080c 0%, #0d141c 46%, #160c08 100%);
+      min-height: 100vh;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    header {
+      padding: 56px 24px 24px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(14px);
+      font-size: 13px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(42px, 7vw, 86px);
+      line-height: .9;
+      letter-spacing: -0.07em;
+    }
+    .subtitle {
+      max-width: 780px;
+      color: #c7d2e3;
+      font-size: clamp(17px, 2vw, 22px);
+      line-height: 1.45;
+      margin: 0;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px 24px 80px;
+    }
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      margin: 26px 0;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+    .card-pad { padding: 22px; }
+    .progress-wrap {
+      display: grid;
+      gap: 14px;
+    }
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .progress-bar {
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--line);
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    button, .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 13px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    button:hover, .btn:hover { transform: translateY(-1px); border-color: rgba(255,177,74,.55); background: rgba(255,177,74,.1); }
+    .primary { background: linear-gradient(135deg, rgba(255,107,44,.95), rgba(255,177,74,.9)); color: #160c08; border: 0; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .metric b { display:block; font-size: 20px; margin-bottom: 3px; }
+    .metric span { color: var(--muted); font-size: 13px; }
+    .phase-list { display: grid; gap: 16px; }
+    details.phase {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    details[open] summary { border-bottom: 1px solid var(--line); }
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+    summary::-webkit-details-marker { display:none; }
+    .phase-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,107,44,.14);
+      border: 1px solid rgba(255,177,74,.28);
+      color: var(--accent-2);
+      font-weight: 900;
+    }
+    .phase-title h2 { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.03em; }
+    .phase-title p { margin: 0; color: var(--muted); font-size: 14px; }
+    .phase-state { color: var(--muted); font-size: 13px; }
+    .phase-body { padding: 20px; display: grid; gap: 18px; }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    h3 { margin: 0 0 10px; font-size: 16px; color: #f8fafc; }
+    ul.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .checklist li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      color: #d9e3f2;
+      line-height: 1.35;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      margin-top: 1px;
+    }
+    .note {
+      border-left: 4px solid var(--accent);
+      background: rgba(255,107,44,.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: #f5d8c8;
+      line-height: 1.45;
+    }
+    .warn { border-left-color: var(--warn); background: rgba(250,204,21,.08); color: #fef3c7; }
+    .danger { border-left-color: var(--bad); background: rgba(251,113,133,.08); color: #ffe4e9; }
+    pre {
+      margin: 0;
+      background: var(--code);
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 16px;
+      overflow: auto;
+      padding: 16px;
+      color: #d8e7ff;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .code-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .code-head span { color: var(--muted); font-size: 13px; }
+    .copy { padding: 7px 10px; font-size: 12px; }
+    .pill-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    footer { color: var(--muted); padding: 30px 0 0; text-align: center; }
+    @media (max-width: 860px) {
+      .top-grid, .split { grid-template-columns: 1fr; }
+      summary { grid-template-columns: auto 1fr; }
+      .phase-state { grid-column: 2; }
+    }
+    @media print {
+      body { background: #fff; color: #111827; }
+      .card, details.phase { box-shadow: none; border-color: #d1d5db; background: #fff; }
+      button, .actions { display:none !important; }
+      details.phase { break-inside: avoid; }
+      details.phase:not([open]) .phase-body { display: block; }
+      .subtitle, .phase-title p, .metric span, .phase-state, footer { color: #374151; }
+      pre { white-space: pre-wrap; background: #f3f4f6; color: #111827; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Mustafar · Mac Pro 5,1 · Server Conversion</div>
+    <h1>Mustafar Server Playbook</h1>
+    <p class="subtitle">A practical phase-by-phase setup guide for turning the 2012 Mac Pro into a real creative server: storage, backups, containers, monitoring, remote access, dashboarding, and optional local AI.</p>
+  </header>
+
+  <main>
+    <section class="top-grid">
+      <div class="card card-pad progress-wrap">
+        <div class="progress-row"><strong>Overall completion</strong><span id="progressText">0% complete</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="actions">
+          <button class="primary" onclick="expandAll()">Expand all phases</button>
+          <button onclick="collapseAll()">Collapse all</button>
+          <button onclick="window.print()">Print / Save PDF</button>
+          <button onclick="resetProgress()">Reset checkboxes</button>
+        </div>
+        <div class="note">Progress is stored locally in this browser using localStorage. It does not write to the repo or to Mustafar.</div>
+      </div>
+      <div class="card card-pad">
+        <div class="meta-grid">
+          <div class="metric"><b>11</b><span>Implementation phases</span></div>
+          <div class="metric"><b>4</b><span>Core Docker stacks</span></div>
+          <div class="metric"><b>2</b><span>launchd schedules</span></div>
+          <div class="metric"><b>3</b><span>Automation scripts</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="phase-list" id="phases"></section>
+
+    <footer>Mustafar Playbook · Keep backups verified before enabling remote access.</footer>
+  </main>
+
+  <script>
+    const phases = [
+      {
+        n: 0,
+        title: "Baseline inventory and safety prep",
+        desc: "Document the current machine before touching disks, OpenCore, or services.",
+        tags: ["audit", "no changes", "snapshot"],
+        checks: [
+          "Record current macOS version, OpenCore version, and boot picker behavior.",
+          "Run Disk Utility First Aid on the boot SSD and all internal HDDs.",
+          "Export a list of installed apps, launch agents, and Homebrew packages if present.",
+          "Confirm you have a known-good keyboard, monitor, and local admin account before remote-only work.",
+          "Photograph the internal drive layout and label each bay logically."
+        ],
+        commandTitle: "Baseline commands",
+        command: `sw_vers
+system_profiler SPHardwareDataType SPStorageDataType
+
+diskutil list
+mount
+
+launchctl list | grep -i -E "docker|tailscale|cloudflared|mustafar" || true
+brew list --versions 2>/dev/null || true`
+      },
+      {
+        n: 1,
+        title: "Storage layout and naming",
+        desc: "Give every drive a clear purpose before data cleanup or app setup starts.",
+        tags: ["SSD", "HDD", "creative storage"],
+        checks: [
+          "Keep the internal SSD focused on OS, apps, Docker runtime, and server tooling.",
+          "Use a primary creative volume for active RAW, selects, exports, and project files.",
+          "Use a separate archive volume for old projects, backup repositories, and cold storage.",
+          "Avoid mixing backup repositories and active working files on the same logical folder tree.",
+          "Create top-level folders before importing old loose data."
+        ],
+        commandTitle: "Suggested folder scaffold",
+        command: `sudo mkdir -p /Volumes/Mustafar-Primary/{000_Ingest,RAW,Selects,Exports,Archive,Projects}
+sudo mkdir -p /Volumes/Mustafar-Archive/{restic-repo,Cold-Storage,Old-Projects}
+sudo mkdir -p /var/log/mustafar
+sudo mkdir -p /var/mustafar
+sudo touch /var/mustafar/pipeline_state.json`
+      },
+      {
+        n: 2,
+        title: "Homebrew bootstrap",
+        desc: "Install the base server toolchain using the repo Brewfile.",
+        tags: ["brew", "tools", "bootstrap"],
+        checks: [
+          "Install or repair Homebrew first.",
+          "Run the committed Brewfile from the repo root.",
+          "Verify git, jq, smartctl, restic, cloudflared, and Node are available.",
+          "Do not depend on OrbStack until it is tested under the OpenCore-patched OS."
+        ],
+        commandTitle: "Bootstrap commands",
+        command: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+cd ~/mustafar
+brew bundle --file=Brewfile
+
+which git jq smartctl restic cloudflared node
+node --version
+restic version`
+      },
+      {
+        n: 3,
+        title: "Container runtime and Portainer",
+        desc: "Bring up Docker/OrbStack management first, then use Portainer as the control panel.",
+        tags: ["Docker", "OrbStack", "Portainer"],
+        checks: [
+          "Launch OrbStack or Docker Desktop and confirm `docker ps` works.",
+          "Start Portainer from docker/portainer.yml.",
+          "Create the initial Portainer admin user locally.",
+          "Do not expose Portainer publicly until Cloudflare Access is configured."
+        ],
+        commandTitle: "Start Portainer",
+        command: `docker version
+docker compose -f docker/portainer.yml up -d
+docker ps
+
+# Local URL
+open https://localhost:9443`
+      },
+      {
+        n: 4,
+        title: "Monitoring stack",
+        desc: "Add visibility before automation gets complex.",
+        tags: ["Netdata", "Uptime Kuma", "Dozzle"],
+        checks: [
+          "Start Netdata, Uptime Kuma, and Dozzle.",
+          "Add local service monitors in Uptime Kuma for Portainer, Netdata, and Dozzle.",
+          "Confirm container logs are visible in Dozzle.",
+          "Create a habit of checking monitoring before and after major changes."
+        ],
+        commandTitle: "Start monitoring",
+        command: `docker compose -f docker/monitoring.yml up -d
+
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+open http://localhost:19999
+open http://localhost:3001
+open http://localhost:8888`
+      },
+      {
+        n: 5,
+        title: "Backups before remote access",
+        desc: "Verify a real restore path before opening any remote routes.",
+        tags: ["Restic", "restore test", "critical"],
+        checks: [
+          "Initialize the Restic repo on the archive volume.",
+          "Run the backup script manually once and confirm snapshots exist.",
+          "Restore a test file to a temporary folder and verify it opens.",
+          "Install the launchd backup schedule only after the manual test succeeds.",
+          "Add cloud backup later; local verified backup comes first."
+        ],
+        commandTitle: "Initialize and test Restic",
+        command: `restic -r /Volumes/Mustafar-Archive/restic-repo init
+
+chmod +x scripts/restic_backup.sh
+./scripts/restic_backup.sh
+
+restic -r /Volumes/Mustafar-Archive/restic-repo snapshots
+mkdir -p /tmp/mustafar-restore-test
+restic -r /Volumes/Mustafar-Archive/restic-repo restore latest --target /tmp/mustafar-restore-test`
+      },
+      {
+        n: 6,
+        title: "Remote access and tunnels",
+        desc: "Use Tailscale for machine access and Cloudflare Access for browser apps.",
+        tags: ["Tailscale", "Cloudflare", "Zero Trust"],
+        checks: [
+          "Install and sign into Tailscale for private machine access.",
+          "Create the Cloudflare tunnel named mustafar.",
+          "Replace placeholder hostnames and tunnel ID in config/cloudflared.yml.",
+          "Protect each public hostname with Cloudflare Access policies.",
+          "Confirm backups are working before leaving tunnel services enabled."
+        ],
+        commandTitle: "Cloudflare tunnel scaffold",
+        command: `tailscale status
+
+cloudflared tunnel login
+cloudflared tunnel create mustafar
+cloudflared tunnel route dns mustafar portainer.yourdomain.com
+
+cloudflared tunnel --config config/cloudflared.yml run mustafar`
+      },
+      {
+        n: 7,
+        title: "Mustafar dashboard build",
+        desc: "Convert the static concept into a real Next.js dashboard wired to live services.",
+        tags: ["Next.js", "dashboard", "API"],
+        checks: [
+          "Scaffold the Next.js app in a separate folder or branch.",
+          "Wire system metrics from Netdata.",
+          "Wire container data from Portainer or Docker socket via a safe backend API.",
+          "Read/write creative pipeline state from /var/mustafar/pipeline_state.json.",
+          "Keep auth outside the app by using Cloudflare Access."
+        ],
+        commandTitle: "Dashboard scaffold",
+        command: `npx create-next-app@latest mustafar-dashboard --typescript --tailwind --app --no-git
+cd mustafar-dashboard
+npm install
+npm run dev
+
+# Expected local URL
+open http://localhost:3000`
+      },
+      {
+        n: 8,
+        title: "Creative ingest pipeline",
+        desc: "Use the ingest script to safely copy camera card files into the active project flow.",
+        tags: ["photo", "video", "ingest"],
+        checks: [
+          "Make scripts/ingest.sh executable.",
+          "Test with a small SD card or copied DCIM folder first.",
+          "Confirm duplicates are skipped by filename.",
+          "Review /var/log/mustafar/ingest.log after every first test.",
+          "Future upgrade: add EXIF-based sorting into RAW/YYYY/MM."
+        ],
+        commandTitle: "Run ingest manually",
+        command: `chmod +x scripts/ingest.sh
+./scripts/ingest.sh
+
+tail -n 80 /var/log/mustafar/ingest.log
+ls -lah /Volumes/Mustafar-Primary/000_Ingest`
+      },
+      {
+        n: 9,
+        title: "SMART health automation",
+        desc: "Schedule daily disk health checks and catch failing drives early.",
+        tags: ["SMART", "launchd", "disk health"],
+        checks: [
+          "Make smart_check.sh executable.",
+          "Run the script manually and review the log output.",
+          "Install the launchd plist after manual success.",
+          "Future upgrade: replace desktop notifications with email or Telegram alerts."
+        ],
+        commandTitle: "Install SMART check schedule",
+        command: `chmod +x scripts/smart_check.sh
+./scripts/smart_check.sh
+
+cp launchd/com.mustafar.smart.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.mustafar.smart.plist
+launchctl list | grep mustafar
+
+tail -f /var/log/mustafar/smart_check.log`
+      },
+      {
+        n: 10,
+        title: "Optional local AI services",
+        desc: "Only add Ollama/Open WebUI after the server basics are stable.",
+        tags: ["Ollama", "Open WebUI", "optional"],
+        checks: [
+          "Start with a small 1B or 3B model to benchmark CPU inference.",
+          "Do not assume Vega 64 GPU acceleration will work under OpenCore.",
+          "Keep local AI isolated from backup-critical storage paths.",
+          "Monitor thermals during the first long inference session."
+        ],
+        commandTitle: "Start Ollama stack",
+        command: `docker compose -f docker/ollama.yml up -d
+curl http://localhost:11434/api/tags
+
+# Example small model test
+# docker exec -it ollama ollama pull llama3.2:1b
+# docker exec -it ollama ollama run llama3.2:1b`
+      }
+    ];
+
+    function phaseTemplate(p) {
+      const checks = p.checks.map((item, i) => `
+        <li><input type="checkbox" data-key="phase-${p.n}-${i}"><span>${item}</span></li>`).join('');
+      const tags = p.tags.map(t => `<span class="pill">${t}</span>`).join('');
+      const warning = p.n === 5 ? '<div class="note danger">Do not enable public remote routes until this phase has been completed and a restore test succeeds.</div>' : '';
+      return `
+        <details class="phase" ${p.n === 0 ? 'open' : ''}>
+          <summary>
+            <div class="phase-num">${p.n}</div>
+            <div class="phase-title"><h2>${p.title}</h2><p>${p.desc}</p></div>
+            <div class="phase-state" id="state-${p.n}">0/${p.checks.length}</div>
+          </summary>
+          <div class="phase-body">
+            <div class="pill-row">${tags}</div>
+            ${warning}
+            <div class="split">
+              <div>
+                <h3>Checklist</h3>
+                <ul class="checklist">${checks}</ul>
+              </div>
+              <div>
+                <div class="code-head"><span>${p.commandTitle}</span><button class="copy" onclick="copyCommand(${p.n})">Copy</button></div>
+                <pre><code id="cmd-${p.n}">${escapeHtml(p.command)}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+
+    function render() {
+      document.getElementById('phases').innerHTML = phases.map(phaseTemplate).join('');
+      document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+        box.checked = localStorage.getItem('mustafar-' + box.dataset.key) === 'true';
+        box.addEventListener('change', () => {
+          localStorage.setItem('mustafar-' + box.dataset.key, box.checked);
+          updateProgress();
+        });
+      });
+      updateProgress();
+    }
+
+    function updateProgress() {
+      let total = 0, done = 0;
+      phases.forEach(p => {
+        let phaseDone = 0;
+        p.checks.forEach((_, i) => {
+          total++;
+          const checked = document.querySelector(`[data-key="phase-${p.n}-${i}"]`)?.checked;
+          if (checked) { done++; phaseDone++; }
+        });
+        const el = document.getElementById('state-' + p.n);
+        if (el) el.textContent = `${phaseDone}/${p.checks.length}`;
+      });
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      document.getElementById('progressText').textContent = `${pct}% complete · ${done}/${total} tasks`;
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+
+    function copyCommand(n) {
+      const text = phases.find(p => p.n === n).command;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = old, 900);
+      });
+    }
+
+    function expandAll() { document.querySelectorAll('details.phase').forEach(d => d.open = true); }
+    function collapseAll() { document.querySelectorAll('details.phase').forEach(d => d.open = false); }
+    function resetProgress() {
+      if (!confirm('Reset all Mustafar playbook checkboxes in this browser?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+        localStorage.removeItem('mustafar-' + box.dataset.key);
+        box.checked = false;
+      });
+      updateProgress();
+    }
+
+    render();
+  </script>
+</body>
+</html>
