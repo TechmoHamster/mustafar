@@ -1,0 +1,22 @@
+{
+  "name": "mustafar-playbook",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static browser playbook for Mustafar server conversion and SSD/OS upgrade work.",
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "start": "python3 -m http.server 8080",
+    "validate": "node scripts/validate_site.mjs"
+  },
+  "keywords": [
+    "mustafar",
+    "mac-pro",
+    "server",
+    "playbook",
+    "static-site"
+  ],
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  }
+}
