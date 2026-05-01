@@ -1,0 +1,33 @@
+# Mustafar — Brewfile
+# Run: brew bundle --file=config/Brewfile
+
+tap "homebrew/cask"
+
+# ── Core CLI Tools ──
+brew "git"
+brew "curl"
+brew "wget"
+brew "rsync"
+brew "htop"
+brew "jq"
+brew "tmux"
+brew "zsh-autosuggestions"
+brew "zsh-syntax-highlighting"
+
+# ── Network & Remote Access ──
+brew "tailscale"
+brew "nmap"
+brew "mtr"
+
+# ── Docker & Container Tooling ──
+brew "docker"
+brew "docker-compose"
+
+# ── Server Utilities ──
+brew "neofetch"
+brew "duf"           # better disk usage
+brew "dust"          # better du
+brew "bottom"        # better top/htop
+
+# ── Casks ──
+cask "tailscale"
