@@ -1,0 +1,35 @@
+# Ollama — Local AI Inference
+# NOTE: Test with a 1B model first before pulling anything larger.
+# Vega 64 Metal support under OpenCore is not guaranteed.
+# Run: docker compose -f docker/ollama.yml up -d
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    # API: http://localhost:11434/api
+    # Test: curl http://localhost:11434/api/tags
+
+  # ── Open WebUI (chat interface for Ollama) ────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open_webui_data:/app/backend/data
+    ports:
+      - "3002:8080"
+    # Access: http://localhost:3002
+
+volumes:
+  ollama_data:
+  open_webui_data:
