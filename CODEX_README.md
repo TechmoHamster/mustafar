@@ -1,188 +1,142 @@
-# MUSTAFAR — Server Conversion Package
-## Instructions for Codex
+# MUSTAFAR PLAYBOOK — Codex Handoff README
+## April 30, 2026 | Prepared for Zach Johnson
 
 ---
 
-## What This Is
+## What This Package Is
 
-A complete setup package for converting a 2012 Mac Pro (Mac Pro 5,1) into a
-fully functional creative server running macOS Monterey via OpenCore Legacy
-Patcher. Everything in this package is production-ready and tested against
-the Mac Pro 5,1 hardware profile.
+This is the complete Mustafar Server Conversion Playbook package. It includes:
 
----
-
-## Package Contents
-
-```
-mustafar-playbook/
-│
-├── mustafar_playbook.html      ← Interactive visual playbook (open in browser)
-│                                 Tap phases to track progress. Expand cards
-│                                 for step-by-step terminal commands.
-│
-├── Brewfile                    ← Run: brew bundle --file=Brewfile
-│                                 Installs the entire base tool stack.
-│
-├── docker/
-│   ├── portainer.yml           ← Container management UI  (port 9443)
-│   ├── monitoring.yml          ← Netdata + Uptime Kuma + Dozzle
-│   ├── dev.yml                 ← VS Code Server + PostgreSQL + Redis
-│   └── ollama.yml              ← Local AI inference (Phase 10)
-│
-├── config/
-│   └── cloudflared.yml         ← Cloudflare Tunnel ingress config (edit hostnames)
-│
-├── scripts/
-│   ├── smart_check.sh          ← SMART disk health monitor
-│   ├── restic_backup.sh        ← Automated Restic backup
-│   └── ingest.sh               ← Camera card → /000_Ingest pipeline
-│
-└── launchd/
-    ├── com.mustafar.smart.plist   ← Schedules smart_check.sh daily at 8AM
-    └── com.mustafar.backup.plist  ← Schedules restic_backup.sh hourly
-```
+- `mustafar_playbook.html` — The full playbook web page (5 tabs, self-contained HTML/CSS/JS)
+- `scripts/` — Shell scripts for preflight, backup, and validation
+- `config/Brewfile` — Homebrew bundle for server tooling
+- `config/docker-compose.yml` — Monitoring stack (Portainer, Grafana, Prometheus, Uptime Kuma)
 
 ---
 
-## What Codex Needs to Complete
+## What Changed in This Version
 
-### Priority 1 — Phase 7: Next.js Dashboard
+A new **"SSD & OS Upgrade"** tab has been added to the playbook. It contains the full
+500GB → 1TB SSD migration and macOS Sequoia/OCLP upgrade guidebook, integrated into
+the existing playbook design system.
 
-The interactive dashboard demo (`mustafar_dashboard_full.html`) is a static
-HTML mockup. Codex needs to build the real Next.js application that connects
-to live APIs.
+**New tab added:** `SSD & OS Upgrade`
+**New phases added:** Phase 0 through Phase 10 (inventory → validation)
+**New scripts added:**
+  - `scripts/ssd_phase0_preflight.sh`
+  - `scripts/ssd_phase1_backup.sh`
+  - `scripts/ssd_phase10_validate.sh`
 
-**Scaffold:**
+---
+
+## Codex Tasks
+
+### 1. Serve / host the HTML
+The `mustafar_playbook.html` file is fully self-contained. To serve it locally:
 ```bash
-npx create-next-app@latest mustafar-dashboard \
-  --typescript --tailwind --app --no-git
-cd mustafar-dashboard
-npm install
+cd mustafar-playbook
+python3 -m http.server 8080
+# Then open http://localhost:8080/mustafar_playbook.html
 ```
 
-**API connections to wire up:**
+### 2. Wire up the shell scripts as downloadable links (optional enhancement)
+Each phase card in the "SSD & OS Upgrade" tab has a `phase-tag` label showing a script
+filename (e.g., `scripts/ssd_phase0_preflight.sh`). If you want those to be clickable
+download links in the HTML, add an `<a>` tag pointing to the script file.
 
-| Data | Source | Endpoint |
-|---|---|---|
-| Container list + status | Portainer | `GET https://localhost:9443/api/endpoints/1/docker/containers/json` |
-| CPU / RAM / Disk / Temp | Netdata | `GET http://localhost:19999/api/v1/data?chart=system.cpu` |
-| Service uptime | Uptime Kuma | REST API or status page embed |
-| Container logs | Dozzle | WebSocket stream |
-| Creative pipeline state | Local JSON file | `/var/mustafar/pipeline_state.json` |
+Example — find the phase-tag for Phase 0 and update it:
+```html
+<!-- Before -->
+<span class="phase-tag">scripts/ssd_phase0_preflight.sh</span>
 
-**Pages to build** (match the mockup in `mustafar_dashboard_full.html`):
-- `/` → Overview (metrics, sparklines, containers, logs)
-- `/containers` → Full container table
-- `/monitor` → Extended charts (5-min history, SMART panel)
-- `/logs` → Full log stream with service filter
-- `/services` → Uptime Kuma status + Cloudflare/Tailscale detail
-- `/pipeline` → Creative file pipeline tracker
-- `/storage` → Drive and folder usage bars
-- `/backups` → Restic snapshot list + schedule
-- `/network` → Network throughput + Tailscale peers
+<!-- After -->
+<span class="phase-tag">
+  <a href="scripts/ssd_phase0_preflight.sh" download style="color:inherit">
+    scripts/ssd_phase0_preflight.sh ↓
+  </a>
+</span>
+```
 
-**Auth:** wrap the entire app behind Cloudflare Access — no login UI needed
-inside the Next.js app itself.
+Do this for all three script references:
+- Phase 0 → `scripts/ssd_phase0_preflight.sh`
+- Phase 1 → `scripts/ssd_phase1_backup.sh`
+- Phase 10 → `scripts/ssd_phase10_validate.sh`
 
----
+### 3. Wire up the Server Conversion tab scripts (same pattern)
+The Phase A–E cards in the "Server Conversion" tab reference:
+- Phase A → `scripts/a_homebrew.sh` (not yet written; Codex can stub or implement)
+- Phase B → `config/docker-compose.yml`
+- Phase C → `scripts/c_tailscale.sh` (stub or implement)
+- Phase D → `scripts/d_smb.sh` (stub or implement)
+- Phase E → `scripts/e_launch.sh` (stub or implement)
 
-### Priority 2 — Pipeline State File
+### 4. Make the phase-tile cards on the Overview tab scroll-link to the right phase
+Currently clicking a phase tile calls `switchTab('ssd-upgrade')` which switches tabs
+but doesn't scroll to the specific phase. To also scroll, add a second step:
 
-The creative pipeline tracker in the dashboard reads from a simple JSON file.
-Create this structure and a small API route to read/write it:
-
-```json
-{
-  "updated_at": "2025-01-01T00:00:00Z",
-  "session": "Shoot_2025_001",
-  "stages": {
-    "ingest":  { "count": 47, "status": "complete" },
-    "raw":     { "count": 47, "status": "complete" },
-    "selects": { "count": 18, "total": 47, "status": "active" },
-    "exports": { "count": 0,  "status": "pending" },
-    "archive": { "count": 0,  "status": "pending" }
+```javascript
+function switchTab(id, phaseId) {
+  // ... existing tab switch logic ...
+  if (phaseId) {
+    setTimeout(() => {
+      const el = document.getElementById(phaseId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   }
 }
 ```
 
-API route: `GET/POST /api/pipeline` — reads/writes
-`/var/mustafar/pipeline_state.json`.
+Then give each phase card an `id` attribute (e.g., `id="phase-0"`) and update the
+tile's onclick to pass it: `onclick="switchTab('ssd-upgrade', 'phase-0')"`.
+
+### 5. (Optional) Add a print/PDF stylesheet
+For printing a checklist version, add a `<link rel="stylesheet" media="print">` that:
+- Shows only the active tab or all tabs
+- Hides the nav and collapsible headers
+- Expands all phase bodies
 
 ---
 
-### Priority 3 — Script Hardening
-
-The three shell scripts in `/scripts/` are functional but Codex should:
-
-1. **`smart_check.sh`** — add email/Telegram notification support when a
-   disk health warning fires (not just macOS notifications, which only work
-   when logged into the desktop).
-
-2. **`restic_backup.sh`** — add RESTIC_PASSWORD env var handling via a
-   `.env` file (never hardcode the password). Add B2 cloud backup as a
-   parallel job using `wait` so local + cloud run concurrently.
-
-3. **`ingest.sh`** — add EXIF-based date folder sorting. After copying to
-   `/000_Ingest`, optionally sort into `/RAW/YYYY/MM/` using exiftool:
-   ```bash
-   brew install exiftool
-   exiftool -DateTimeOriginal "$FILE"
-   ```
-
----
-
-### Priority 4 — Docker Compose Passwords
-
-Before the dev stack is deployed, replace all `changeme` passwords in
-`docker/dev.yml` with values from a `.env` file:
-
+## File Structure
 ```
-# .env (add to .gitignore — never commit)
-CODE_SERVER_PASSWORD=...
-POSTGRES_PASSWORD=...
-```
-
-Update `docker/dev.yml` to read:
-```yaml
-environment:
-  - PASSWORD=${CODE_SERVER_PASSWORD}
+mustafar-playbook/
+├── mustafar_playbook.html        ← Main page (hand off to hosting)
+├── CODEX_README.md               ← This file
+├── scripts/
+│   ├── ssd_phase0_preflight.sh   ← Phase 0: inventory
+│   ├── ssd_phase1_backup.sh      ← Phase 1: EFI backup
+│   └── ssd_phase10_validate.sh   ← Phase 10: post-upgrade validation
+└── config/
+    ├── Brewfile                  ← Homebrew bundle
+    └── docker-compose.yml        ← Monitoring stack
 ```
 
 ---
 
-## Build Order
+## Design System (for any additions)
 
-Follow the phase sequence in `mustafar_playbook.html`:
-**0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10**
+The page uses a consistent set of CSS variables. Do not add colors outside this palette:
 
-Do not skip phases. Phase 5 (Backups) must be verified working before
-Phase 6 (Remote Access) is enabled.
+| Variable       | Value          | Use               |
+|----------------|----------------|-------------------|
+| `--ember`      | `#e8620a`      | Primary accent    |
+| `--amber`      | `#f5a623`      | Secondary accent  |
+| `--green`      | `#4ecb82`      | Success states    |
+| `--red`        | `#e84848`      | Warning/error     |
+| `--blue`       | `#5aa8f0`      | Info/links        |
+| `--text`       | `#d4cfc8`      | Body text         |
+| `--text-bright`| `#f0ebe3`      | Headings          |
+| `--text-dim`   | `#7a7570`      | Muted text        |
+| `--border`     | `#2a2a32`      | All borders       |
+| `--surface`    | `#111114`      | Card backgrounds  |
 
----
-
-## Hardware Constraints (Do Not Ignore)
-
-- **SATA III only** — no NVMe drives
-- **OrbStack must be tested** on the OpenCore-patched system before depending on it
-- **Vega 64 Metal support** is not guaranteed under OpenCore — benchmark CPU inference before planning GPU workloads
-- **3× spinning HDDs** — avoid aggressive parallel I/O; stagger disk operations
-
----
-
-## File Paths (Production)
-
-| Purpose | Path |
-|---|---|
-| Creative primary drive | `/Volumes/Mustafar-Primary/` |
-| Archive drive | `/Volumes/Mustafar-Archive/` |
-| Restic repo | `/Volumes/Mustafar-Archive/restic-repo/` |
-| Ingest folder | `/Volumes/Mustafar-Primary/000_Ingest/` |
-| RAW folder | `/Volumes/Mustafar-Primary/RAW/` |
-| Pipeline state | `/var/mustafar/pipeline_state.json` |
-| Logs | `/var/log/mustafar/` |
-| This package | `/Users/admin/mustafar-playbook/` |
+Fonts: `Share Tech Mono` (code/labels) · `Barlow Condensed` (headings) · `Barlow` (body)
 
 ---
 
-*Mustafar · Mac Pro 5,1 · 2012 · macOS Monterey · OpenCore*
+## Notes for Zach
+
+- The old 500GB SSD should stay untouched until the 1TB install is proven stable for 1–2 weeks.
+- macOS Sequoia via OCLP is the recommended OS target. Do not target Tahoe as the first attempt.
+- Ethernet is required during install and patching. Wi‑Fi won't work until OCLP root patches are applied.
+- Keep the OpenCore boot picker visible during the first few weeks for recovery access.
